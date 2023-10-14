@@ -1,5 +1,6 @@
 from .keyboards import *
 from .database.base import *
+from .parser import *
 
 from aiogram.types import CallbackQuery
 from aiogram.dispatcher import FSMContext
