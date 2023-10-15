@@ -8,3 +8,16 @@ async def get_language_keyboard():
         InlineKeyboardButton("🇧🇾 Беларускі", callback_data="language:by"),
     )
     return keyboard
+
+async def get_find_keyboard(after: bool = False, state: str = None):
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(
+        InlineKeyboardButton("Отменить", callback_data="cancel"),
+    )
+
+    if after == True:
+        keyboard.add(
+            InlineKeyboardButton("Пропустить", callback_data=f"skip:{state}"),
+        )
+
+    return keyboard

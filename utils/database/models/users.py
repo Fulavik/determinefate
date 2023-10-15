@@ -3,8 +3,8 @@ from tortoise import fields
 
 
 class Users(Model):
-    id = fields.IntField(max_length=4)
-    uid = fields.BigIntField(max_length=20, pk=True)
+    id = fields.IntField(max_length=4, pk=True)
+    uid = fields.BigIntField(max_length=20)
 
     language = fields.IntField(max_length=2)
 
