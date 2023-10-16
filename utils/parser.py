@@ -12,7 +12,7 @@ async def get_partizans(surname: str, name: str, middlename: str, year_of_birth:
 
     browser.get(f"https://obd-memorial.ru/html/search.htm?f={surname}&n={name}&s={middlename}&y={year_of_birth}&r={rank}")
 
-    await asyncio.sleep(2)
+    await asyncio.sleep(1.5)
 
     div_elements = browser.find_elements('tag name', 'div')
 
