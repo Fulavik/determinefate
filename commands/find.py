@@ -65,17 +65,25 @@ async def add_date(message: types.Message, state: FSMContext):
 async def add_rank(message: types.Message, state: FSMContext):
     keyboard = types.ReplyKeyboardMarkup(keyboard=kb2, resize_keyboard=True)
     await message.reply(PHRASES[await get_user_language(message.from_id)]["input_rank"], reply_markup=keyboard)
+
+    if not message.text.isdigit() and not message.text == "➡️Пропустить":
+       #Рома фиксани
+       await state.set_state(Add.year_of_birth)
+       return await message.reply(PHRASES[await get_user_language(message.from_id)]["error_year"])
+
     await state.update_data(year_of_birth=int(message.text))
     await Add.next()
 
 @dp.message_handler(state=Add.rank)
-@check_canceled
 async def rank(message: types.Message, state: FSMContext):
     # keyboard = types.ReplyKeyboardMarkup(keyboard=kb2, resize_keyboard=True)
     language = await get_user_language(message.from_id)
     await state.update_data(rank=message.text)
     async with state.proxy() as data:
+        print(data)
         form = CreatedForm(**data)
+
+    
 
     await message.reply(f"""
 <b>{PHRASES[language]["check_inputed_info"]}:</b>
@@ -88,7 +96,6 @@ async def rank(message: types.Message, state: FSMContext):
     await Add.next()
 
 @dp.message_handler(Text('Да', ignore_case=True))
-@check_canceled
 async def yes_form(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         form = CreatedForm(**data)

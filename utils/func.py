@@ -26,6 +26,7 @@ PHRASES = {
         "input_year_of_birth": "Введите год рождения: ",
         "input_rank": "Введите звание: ",
 
+        "error_year": "Не правильно веден год",
         "check_inputed_info": "Проверьте ввёденную информацию",
         "name": "Имя",
         "surname": "Фамилия",
@@ -44,6 +45,7 @@ PHRASES = {
         "input_year_of_birth": "Увядзіце год нараджэння: ",
         "input_rank": "Увядзіце званне: ",
 
+        "error_year": "Няправільна ўведзены год",
         "check_inputed_info": "Праверце ўведзеную інфармацыю",
         "name": "Імя",
         "surname": "Прозвішча",
