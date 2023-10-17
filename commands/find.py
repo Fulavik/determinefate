@@ -5,12 +5,11 @@ from pydantic import BaseModel
 from utils.func import *
 
 def kb2(language):
-    return [
-            [types.KeyboardButton(text=f'➡️{PHRASES[language]["skip"]}')],
-            [types.KeyboardButton(text=f'❌{PHRASES[language]["cancel"]}')],
-    ]
+    return [[types.KeyboardButton(text=f'➡️{PHRASES[language]["skip"]}')],[types.KeyboardButton(text=f'❌{PHRASES[language]["cancel"]}')]]
 
-def kb(language):  return [[types.KeyboardButton(text=f'❌{PHRASES[language]["cancel"]}')]]
+def kb(language):  
+    return [[types.KeyboardButton(text=f'❌{PHRASES[language]["cancel"]}')]]
+
 
 class CreatedForm(BaseModel):
     uid: int
@@ -95,6 +94,8 @@ async def rank(message: types.Message, state: FSMContext):
     
         form = CreatedForm(**data)
 
+    keyboard = await get_accept_keyboard(PHRASES[language]["cancel"])
+
     await message.reply(f"""
 <b>{PHRASES[language]["check_inputed_info"]}:</b>
 <b>{PHRASES[language]["name"]}: </b> {form.name}
@@ -102,10 +103,19 @@ async def rank(message: types.Message, state: FSMContext):
 <b>{PHRASES[language]["middlename"]}: </b> {form.middlename}
 <b>{PHRASES[language]["year_of_birth"]}: </b> {form.year_of_birth}
 <b>{PHRASES[language]["rank"]}: </b> {form.rank}
-""")
+""", reply_markup=keyboard)
 
-@dp.message_handler(Text('➡️Да', ignore_case=True))
-async def yes_form(message: types.Message, state: FSMContext):
+@dp.callback_query_handler()
+async def accpeter(message: CallbackQuery, state: FSMContext):
+    print(1)
+    accepter = message.data 
+    if accepter == "cancel":
+        await message.answer("Вы отменили поиск")
+        return state.finish()
+
+    if not accepter == "accept":
+        return
+    
     async with state.proxy() as data:
         form = CreatedForm(**data)
     await state.finish()
@@ -158,6 +168,7 @@ ID: {id}
 Название источника донесения: {partizan["issue"]}
 
 Ссылка на результат: https://t.me/determinefateBot?start=id_{id}
+Информация была взята с сайта https://obd-memorial.ru/
 """
 
     await callback_query.message.reply(text)
