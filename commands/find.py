@@ -87,7 +87,7 @@ async def rank(message: types.Message, state: FSMContext):
         
         for key, value in data.items():
             if value == '➡️Пропустить':
-                data[key] = "None"
+                data[key] = ""
     
         form = CreatedForm(**data)
 
