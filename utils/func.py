@@ -5,7 +5,7 @@ from .parser import *
 
 from .states.find import Add
 
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, ReplyKeyboardRemove
 from aiogram.dispatcher import FSMContext
 
 from bot import dispatcher as dp
@@ -26,6 +26,7 @@ PHRASES = {
         "input_year_of_birth": "Введите год рождения: ",
         "input_rank": "Введите звание: ",
 
+        "error_year": "Не правильно веден год",
         "check_inputed_info": "Проверьте ввёденную информацию",
         "name": "Имя",
         "surname": "Фамилия",
@@ -44,6 +45,7 @@ PHRASES = {
         "input_year_of_birth": "Увядзіце год нараджэння: ",
         "input_rank": "Увядзіце званне: ",
 
+        "error_year": "Няправільна ўведзены год",
         "check_inputed_info": "Праверце ўведзеную інфармацыю",
         "name": "Імя",
         "surname": "Прозвішча",
@@ -55,7 +57,8 @@ PHRASES = {
 
 async def get_user_language(user_id: int):
     user = await Users.filter(uid=user_id).first()
-
+    if not user:
+        return "ru"
     return user.language
 
 async def get_phrases(language: str):
@@ -63,6 +66,14 @@ async def get_phrases(language: str):
         translations = json.load(file)
         
     return translations
+
+def check_canceled(funcion):
+    async def decorator_access(message, state):
+        if message.text == "❌Отмена":
+            return await message.reply(f"⛔ Поиск информации отменён", reply_markup=ReplyKeyboardRemove())
+            
+        return await funcion(message, state)
+    return decorator_access
 
 # async def get_phrase(language: str, phrase: str):
 #     with open(f'/utils/languages/{language}.json', 'r', encoding='utf-8') as file:
