@@ -97,25 +97,61 @@ async def rank(message: types.Message, state: FSMContext):
         form = CreatedForm(**data)
 
 
-    await message.reply(f"""
-<b>{PHRASES[language]["check_inputed_info"]}:</b>
-<b>{PHRASES[language]["name"]}: </b> {form.name}
-<b>{PHRASES[language]["surname"]}: </b> {form.surname}
-<b>{PHRASES[language]["middlename"]}: </b> {form.middlename}
-<b>{PHRASES[language]["year_of_birth"]}: </b> {form.year_of_birth}
-<b>{PHRASES[language]["rank"]}: </b> {form.rank}
-""")
-    await Add.next()
 
-@dp.message_handler(Text('Да', ignore_case=True))
+@dp.message_handler(Text('➡️Да', ignore_case=True))
 async def yes_form(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         form = CreatedForm(**data)
     await state.finish()
 
-    await Queries.create(uid=message.from_id, name=form.name, surname=form.surname,
+    query = await Queries.create(uid=message.from_id, name=form.name, surname=form.surname,
                 middlename=form.middlename, year_of_birth=form.year_of_birth,
                 rank=form.rank)
 
     parse = await get_partizans(form.surname, form.name, form.middlename, form.year_of_birth, form.rank)
-    await message.reply(parse)
+    if not parse:
+        return await message.reply("Ничего не найдено!")
+
+    buttons = InlineKeyboardMarkup(row_width=2)
+    number = 0
+    text = "<b>На клавиатуре с кнопками выберите нужного человека по номеру:\n</b>"
+
+    for i in parse:
+        number = number + 1
+        text += f"{number}. {parse[i]['full_name']} [ID: {i}] | {parse[i]['date_of_birth']} | {parse[i]['date_of_die']}\n"
+        buttons.add(InlineKeyboardButton(text=f"{parse[i]['full_name']} [ID: {i}]", callback_data=f"find:{i}"))
+
+    text += f"\nСсылка на результат: https://t.me/fmtestpython_bot?start=search_{query.id}"
+
+    await message.reply(text, reply_markup=buttons)
+
+@dp.callback_query_handler(lambda c: c.data.startswith('find:'))
+async def process_callback_button(callback_query: types.CallbackQuery):
+    id = callback_query.data.split(':')[1]
+    
+    partizan = await get_partizan_by_id(id)
+    if partizan is None:
+        return await callback_query.answer("Произошла ошибка.")
+
+    text = f"""
+<b>Информация из донесения о безвозвратных потерях:</b>
+
+ID: {id}
+
+Фамилия: {partizan["surname"]}
+Имя: {partizan["name"]}
+Отчество: {partizan["middlename"]}
+Дата рождения: {partizan["date_of_bitrh"]}
+Место рождения: {partizan["place_of_birth"]}
+Дата и место призыва: {partizan["call_place"]}
+Последнее место службы: {partizan["last_call_place"]}
+Воинское звание: {partizan["rank"]}
+Причина выбытия: {partizan["reason_of_leave"]}
+Дата выбытия: {partizan["date_of_leave"]}
+Место выбытия: {partizan["place_of_leave"]}
+Название источника донесения: {partizan["issue"]}
+
+Ссылка на результат: https://t.me/determinefateBot?start=id_{id}
+"""
+
+    await callback_query.message.reply(text)
