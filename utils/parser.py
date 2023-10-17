@@ -12,7 +12,7 @@ async def get_partizans(surname: str, name: str, middlename: str, year_of_birth:
 
     link = f"https://obd-memorial.ru/html/search.htm?f={name}&n={surname}&s={middlename}&y={year_of_birth}&r={rank}"
 
-    browser.get(link.replace("None", ""))
+    browser.get(link.replace("None", "").replace("0", ""))
 
     await asyncio.sleep(1.5)
 
