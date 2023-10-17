@@ -21,5 +21,5 @@ async def choose_language(callback_query: CallbackQuery, state: FSMContext):
 
     await callback_query.message.reply("Вы выбрали язык: " + LANGUAGES[lang])
 
-    part = await get_partizan_by_id(1002734)
-    await callback_query.message.reply(part)
+    # part = await get_partizan_by_id(1002734)
+    # await callback_query.message.reply(part)

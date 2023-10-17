@@ -5,7 +5,7 @@ from .parser import *
 
 from .states.find import Add
 
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, ReplyKeyboardRemove
 from aiogram.dispatcher import FSMContext
 
 from bot import dispatcher as dp
@@ -64,6 +64,14 @@ async def get_phrases(language: str):
         translations = json.load(file)
         
     return translations
+
+def check_canceled(funcion):
+    async def decorator_access(message, state):
+        if message.text == "❌Отмена":
+            return await message.reply(f"⛔ Поиск информации отменён", reply_markup=ReplyKeyboardRemove())
+            
+        return await funcion(message, state)
+    return decorator_access
 
 # async def get_phrase(language: str, phrase: str):
 #     with open(f'/utils/languages/{language}.json', 'r', encoding='utf-8') as file:

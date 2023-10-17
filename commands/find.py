@@ -4,6 +4,12 @@ from aiogram.dispatcher.filters import Command, Text
 from pydantic import BaseModel
 from utils.func import *
 
+kb2 = [
+        [types.KeyboardButton(text="➡️Пропустить")],
+        [types.KeyboardButton(text="❌Отмена")],
+    ]
+
+kb = [[types.KeyboardButton(text="❌Отмена")]]
 
 class CreatedForm(BaseModel):
     uid: int
@@ -13,8 +19,8 @@ class CreatedForm(BaseModel):
     year_of_birth: int
     rank: str
 
-
 @dp.message_handler(Command("find", ignore_case=True))
+@check_canceled
 async def find(message: types.Message, state: FSMContext):
     uid = message.from_id
     language = await get_user_language(uid)
@@ -24,10 +30,6 @@ async def find(message: types.Message, state: FSMContext):
         return await message.reply(f"Вы уже начали заполнение информации, отмените его, что-бы начать новое")
 
     await state.update_data(uid=uid)
-
-    kb = [
-        [types.KeyboardButton(text="Отмена")],
-    ]
     keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
 
     await Add.name.set()
@@ -35,58 +37,41 @@ async def find(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=Add.name)
+@check_canceled
 async def add_surname(message: types.Message, state: FSMContext):
-    kb = [
-        [types.KeyboardButton(text="Отмена")],
-    ]
     keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
     await message.reply(PHRASES[await get_user_language(message.from_id)]["input_surname"], reply_markup=keyboard)
     await state.update_data(name=message.text)
     await Add.surname.set()
 
-
 @dp.message_handler(state=Add.surname)
+@check_canceled
 async def add_middlename(message: types.Message, state: FSMContext):
-    kb = [
-        [types.KeyboardButton(text="Пропустить")],
-        [types.KeyboardButton(text="Отмена")],
-    ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb2, resize_keyboard=True)
     await message.reply(PHRASES[await get_user_language(message.from_id)]["input_middlename"], reply_markup=keyboard)
     await state.update_data(surname=message.text)
     await Add.middlename.set()
 
 @dp.message_handler(state=Add.middlename)
+@check_canceled
 async def add_date(message: types.Message, state: FSMContext):
-    kb = [
-        [types.KeyboardButton(text="Пропустить")],
-        [types.KeyboardButton(text="Отмена")],
-    ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb2, resize_keyboard=True)
     await message.reply(PHRASES[await get_user_language(message.from_id)]["input_year_of_birth"], reply_markup=keyboard)
     await state.update_data(middlename=message.text)
     await Add.next()
 
-
 @dp.message_handler(state=Add.year_of_birth)
+@check_canceled
 async def add_rank(message: types.Message, state: FSMContext):
-    kb = [
-        [types.KeyboardButton(text="Пропустить")],
-        [types.KeyboardButton(text="Отмена")],
-    ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb2, resize_keyboard=True)
     await message.reply(PHRASES[await get_user_language(message.from_id)]["input_rank"], reply_markup=keyboard)
     await state.update_data(year_of_birth=int(message.text))
     await Add.next()
 
-
 @dp.message_handler(state=Add.rank)
+@check_canceled
 async def rank(message: types.Message, state: FSMContext):
-    kb = [
-        [types.KeyboardButton(text="Пропустить")],
-        [types.KeyboardButton(text="Отмена")],
-    ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    # keyboard = types.ReplyKeyboardMarkup(keyboard=kb2, resize_keyboard=True)
     language = await get_user_language(message.from_id)
     await state.update_data(rank=message.text)
     async with state.proxy() as data:
@@ -103,6 +88,7 @@ async def rank(message: types.Message, state: FSMContext):
     await Add.next()
 
 @dp.message_handler(Text('Да', ignore_case=True))
+@check_canceled
 async def yes_form(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         form = CreatedForm(**data)
@@ -114,9 +100,3 @@ async def yes_form(message: types.Message, state: FSMContext):
 
     parse = await get_partizans(form.surname, form.name, form.middlename, form.year_of_birth, form.rank)
     await message.reply(parse)
-
-@dp.message_handler(Text('Отмена', ignore_case=True))
-async def cancel(message: types.Message, state: FSMContext):
-    await state.finish()
-    await message.reply(f"Поиск информации отменён.")
-
