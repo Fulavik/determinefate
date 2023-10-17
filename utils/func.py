@@ -55,7 +55,8 @@ PHRASES = {
 
 async def get_user_language(user_id: int):
     user = await Users.filter(uid=user_id).first()
-
+    if not user:
+        return "ru"
     return user.language
 
 async def get_phrases(language: str):

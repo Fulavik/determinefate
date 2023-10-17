@@ -18,46 +18,75 @@ class CreatedForm(BaseModel):
 async def find(message: types.Message, state: FSMContext):
     uid = message.from_id
     language = await get_user_language(uid)
-    is_state = dp.current_state(user=message.from_user).get_state()
+    is_state = await dp.current_state(user=message.from_user).get_state()
 
     if is_state:
         return await message.reply(f"Вы уже начали заполнение информации, отмените его, что-бы начать новое")
 
     await state.update_data(uid=uid)
 
+    kb = [
+        [types.KeyboardButton(text="Отмена")],
+    ]
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+
     await Add.name.set()
-    await message.reply(PHRASES[language]["input_name"])
+    await message.reply(PHRASES[language]["input_name"], reply_markup=keyboard)
 
 
 @dp.message_handler(state=Add.name)
 async def add_surname(message: types.Message, state: FSMContext):
-    await message.reply(PHRASES[await get_user_language(message.from_id)]["input_surname"])
+    kb = [
+        [types.KeyboardButton(text="Отмена")],
+    ]
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    await message.reply(PHRASES[await get_user_language(message.from_id)]["input_surname"], reply_markup=keyboard)
     await state.update_data(name=message.text)
     await Add.surname.set()
 
 
 @dp.message_handler(state=Add.surname)
 async def add_middlename(message: types.Message, state: FSMContext):
-    await message.reply(PHRASES[await get_user_language(message.from_id)]["input_middlename"])
+    kb = [
+        [types.KeyboardButton(text="Пропустить")],
+        [types.KeyboardButton(text="Отмена")],
+    ]
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    await message.reply(PHRASES[await get_user_language(message.from_id)]["input_middlename"], reply_markup=keyboard)
     await state.update_data(surname=message.text)
     await Add.middlename.set()
 
 @dp.message_handler(state=Add.middlename)
 async def add_date(message: types.Message, state: FSMContext):
-    await message.reply(PHRASES[await get_user_language(message.from_id)]["input_year_of_birth"])
+    kb = [
+        [types.KeyboardButton(text="Пропустить")],
+        [types.KeyboardButton(text="Отмена")],
+    ]
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    await message.reply(PHRASES[await get_user_language(message.from_id)]["input_year_of_birth"], reply_markup=keyboard)
     await state.update_data(middlename=message.text)
     await Add.next()
 
 
 @dp.message_handler(state=Add.year_of_birth)
 async def add_rank(message: types.Message, state: FSMContext):
-    await message.reply(PHRASES[await get_user_language(message.from_id)]["input_rank"])
+    kb = [
+        [types.KeyboardButton(text="Пропустить")],
+        [types.KeyboardButton(text="Отмена")],
+    ]
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+    await message.reply(PHRASES[await get_user_language(message.from_id)]["input_rank"], reply_markup=keyboard)
     await state.update_data(year_of_birth=int(message.text))
     await Add.next()
 
 
 @dp.message_handler(state=Add.rank)
 async def rank(message: types.Message, state: FSMContext):
+    kb = [
+        [types.KeyboardButton(text="Пропустить")],
+        [types.KeyboardButton(text="Отмена")],
+    ]
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
     language = await get_user_language(message.from_id)
     await state.update_data(rank=message.text)
     async with state.proxy() as data:
@@ -85,4 +114,9 @@ async def yes_form(message: types.Message, state: FSMContext):
 
     parse = await get_partizans(form.surname, form.name, form.middlename, form.year_of_birth, form.rank)
     await message.reply(parse)
+
+@dp.message_handler(Text('Отмена', ignore_case=True))
+async def cancel(message: types.Message, state: FSMContext):
+    await state.finish()
+    await message.reply(f"Поиск информации отменён.")
 
