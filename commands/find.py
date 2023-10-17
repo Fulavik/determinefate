@@ -66,7 +66,11 @@ async def add_rank(message: types.Message, state: FSMContext):
     keyboard = types.ReplyKeyboardMarkup(keyboard=kb2, resize_keyboard=True)
     await message.reply(PHRASES[await get_user_language(message.from_id)]["input_rank"], reply_markup=keyboard)
 
-    if not message.text.isdigit() and not message.text == "➡️Пропустить":
+    if message.text == "➡️Пропустить":
+        await state.update_data(year_of_birth="➡️Пропустить")
+        return await Add.next()
+
+    if not message.text.isdigit():
        #Рома фиксани
        await state.set_state(Add.year_of_birth)
        return await message.reply(PHRASES[await get_user_language(message.from_id)]["error_year"])
@@ -80,7 +84,11 @@ async def rank(message: types.Message, state: FSMContext):
     language = await get_user_language(message.from_id)
     await state.update_data(rank=message.text)
     async with state.proxy() as data:
-        print(data)
+        
+        for key, value in data.items():
+            if value == '➡️Пропустить':
+                data[key] = "None"
+    
         form = CreatedForm(**data)
 
     
