@@ -1,0 +1,9 @@
+aiogram==2.25.1
+aiomysql
+lxml
+beautifulsoup4
+tortoise
+tortoise-orm
+pydantic
+selenium
+python-dotenv
