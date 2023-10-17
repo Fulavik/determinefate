@@ -67,11 +67,10 @@ async def add_date(message: types.Message, state: FSMContext):
 async def add_rank(message: types.Message, state: FSMContext):
     keyboard = types.ReplyKeyboardMarkup(keyboard=kb2(await get_user_language(message.from_id)), resize_keyboard=True)
     
-    
-    if message.text == "➡️Пропустить" or message.text == "➡️Прадоўжыць":
+    if message.text == "➡️Пропустить" or message.text == "➡️Прапусціць":
         await message.reply(f'🎖️ {PHRASES[await get_user_language(message.from_id)]["input_rank"]}:', reply_markup=keyboard)
-        await state.update_data(year_of_birth="➡️Пропустить")
-        return await Add.rank.set()
+        await state.update_data(year_of_birth=0)
+        return await Add.next()
 
     if not message.text.isdigit():
         await message.reply(f'⛔ {PHRASES[await get_user_language(message.from_id)]["error_year"]}')
@@ -80,7 +79,7 @@ async def add_rank(message: types.Message, state: FSMContext):
     await message.reply(f'🎖️ {PHRASES[await get_user_language(message.from_id)]["input_rank"]}:', reply_markup=keyboard)
 
     await state.update_data(year_of_birth=int(message.text))
-    await Add.rank.set()
+    await Add.next()
 
 @dp.message_handler(state=Add.rank)
 async def rank(message: types.Message, state: FSMContext):
@@ -91,12 +90,19 @@ async def rank(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         
         for key, value in data.items():
-            if value == '➡️Пропустить' or value == "➡️Прадоўжыць":
+            if value == '➡️Пропустить' or value == "➡️Прапусціць":
                 data[key] = ""
     
         form = CreatedForm(**data)
 
-
+    await message.reply(f"""
+<b>{PHRASES[language]["check_inputed_info"]}:</b>
+<b>{PHRASES[language]["name"]}: </b> {form.name}
+<b>{PHRASES[language]["surname"]}: </b> {form.surname}
+<b>{PHRASES[language]["middlename"]}: </b> {form.middlename}
+<b>{PHRASES[language]["year_of_birth"]}: </b> {form.year_of_birth}
+<b>{PHRASES[language]["rank"]}: </b> {form.rank}
+""")
 
 @dp.message_handler(Text('➡️Да', ignore_case=True))
 async def yes_form(message: types.Message, state: FSMContext):
