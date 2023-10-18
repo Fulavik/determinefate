@@ -9,14 +9,6 @@ async def get_language_keyboard():
     )
     return keyboard
 
-async def get_accept_keyboard(cancel):
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(
-        InlineKeyboardButton("✅Да", callback_data="accept"),
-        InlineKeyboardButton(f"❌{cancel}", callback_data="cancel"),
-    )
-    return keyboard
-
 async def get_find_keyboard(after: bool = False, state: str = None):
     keyboard = InlineKeyboardMarkup()
     keyboard.add(

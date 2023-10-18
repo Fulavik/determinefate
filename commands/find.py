@@ -10,6 +10,8 @@ def kb2(language):
 def kb(language):  
     return [[types.KeyboardButton(text=f'❌{PHRASES[language]["cancel"]}')]]
 
+def kb3(language):  
+    return [[types.KeyboardButton(text=f'➡️Да')], [types.KeyboardButton(text=f'❌{PHRASES[language]["cancel"]}')]]
 
 class CreatedForm(BaseModel):
     uid: int
@@ -18,6 +20,7 @@ class CreatedForm(BaseModel):
     middlename: str
     year_of_birth: int
     rank: str
+    accepter: str
 
 @dp.message_handler(Command("find", ignore_case=True))
 @check_canceled
@@ -27,7 +30,7 @@ async def find(message: types.Message, state: FSMContext):
     is_state = await dp.current_state(user=message.from_user).get_state()
 
     if is_state:
-        return await message.reply(f"Вы уже начали заполнение информации, отмените его, что-бы начать новое")
+        return await message.reply(f"🚥 {PHRASES[language]['already_state']}")
 
     await state.update_data(uid=uid)
     keyboard = types.ReplyKeyboardMarkup(keyboard=kb(await get_user_language(message.from_id)), resize_keyboard=True)
@@ -69,7 +72,7 @@ async def add_rank(message: types.Message, state: FSMContext):
     if message.text == "➡️Пропустить" or message.text == "➡️Прапусціць":
         await message.reply(f'🎖️ {PHRASES[await get_user_language(message.from_id)]["input_rank"]}:', reply_markup=keyboard)
         await state.update_data(year_of_birth=0)
-        return await Add.next()
+        return await Add.rank.set()
 
     if not message.text.isdigit():
         await message.reply(f'⛔ {PHRASES[await get_user_language(message.from_id)]["error_year"]}')
@@ -78,14 +81,14 @@ async def add_rank(message: types.Message, state: FSMContext):
     await message.reply(f'🎖️ {PHRASES[await get_user_language(message.from_id)]["input_rank"]}:', reply_markup=keyboard)
 
     await state.update_data(year_of_birth=int(message.text))
-    await Add.next()
+    await Add.rank.set()
 
 @dp.message_handler(state=Add.rank)
 async def rank(message: types.Message, state: FSMContext):
     # keyboard = types.ReplyKeyboardMarkup(keyboard=kb2(await get_user_language(message.from_id)), resize_keyboard=True)
 
     language = await get_user_language(message.from_id)
-    await state.update_data(rank=message.text)
+    await state.update_data(rank=message.text, accepter="False")
     async with state.proxy() as data:
         
         for key, value in data.items():
@@ -94,7 +97,7 @@ async def rank(message: types.Message, state: FSMContext):
     
         form = CreatedForm(**data)
 
-    keyboard = await get_accept_keyboard(PHRASES[language]["cancel"])
+    keyboard = types.ReplyKeyboardMarkup(keyboard=kb3(await get_user_language(message.from_id)), resize_keyboard=True)
 
     await message.reply(f"""
 <b>{PHRASES[language]["check_inputed_info"]}:</b>
@@ -104,42 +107,42 @@ async def rank(message: types.Message, state: FSMContext):
 <b>{PHRASES[language]["year_of_birth"]}: </b> {form.year_of_birth}
 <b>{PHRASES[language]["rank"]}: </b> {form.rank}
 """, reply_markup=keyboard)
+    
+    await Add.accepter.set()
 
-@dp.callback_query_handler()
-async def accpeter(message: CallbackQuery, state: FSMContext):
-    print(1)
-    accepter = message.data 
-    if accepter == "cancel":
-        await message.answer("Вы отменили поиск")
-        return state.finish()
+@dp.message_handler(state=Add.accepter)
+async def rank(message: types.Message, state: FSMContext):
+    accepter = message.text 
+    
 
-    if not accepter == "accept":
+    if accepter == f"❌{PHRASES[await get_user_language(message.from_id)]['cancel']}":
         return
     
-    async with state.proxy() as data:
-        form = CreatedForm(**data)
-    await state.finish()
+    if accepter == "➡️Да":
+        async with state.proxy() as data:
+            form = CreatedForm(**data)
+        await state.finish()
 
-    query = await Queries.create(uid=message.from_id, name=form.name, surname=form.surname,
-                middlename=form.middlename, year_of_birth=form.year_of_birth,
-                rank=form.rank)
+        query = await Queries.create(uid=message.from_id, name=form.name, surname=form.surname,
+                    middlename=form.middlename, year_of_birth=form.year_of_birth,
+                    rank=form.rank)
 
-    parse = await get_partizans(form.surname, form.name, form.middlename, form.year_of_birth, form.rank)
-    if not parse:
-        return await message.reply("Ничего не найдено!")
+        parse = await get_partizans(form.surname, form.name, form.middlename, form.year_of_birth, form.rank)
+        if not parse:
+            return await message.reply("Ничего не найдено!")
 
-    buttons = InlineKeyboardMarkup(row_width=2)
-    number = 0
-    text = "<b>На клавиатуре с кнопками выберите нужного человека по номеру:\n</b>"
+        buttons = InlineKeyboardMarkup(row_width=2)
+        number = 0
+        text = "<b>На клавиатуре с кнопками выберите нужного человека по номеру:\n</b>"
 
-    for i in parse:
-        number = number + 1
-        text += f"{number}. {parse[i]['full_name']} [ID: {i}] | {parse[i]['date_of_birth']} | {parse[i]['date_of_die']}\n"
-        buttons.add(InlineKeyboardButton(text=f"{parse[i]['full_name']} [ID: {i}]", callback_data=f"find:{i}"))
+        for i in parse:
+            number = number + 1
+            text += f"{number}. {parse[i]['full_name']} [ID: {i}] | {parse[i]['date_of_birth']} | {parse[i]['date_of_die']}\n"
+            buttons.add(InlineKeyboardButton(text=f"{parse[i]['full_name']} [ID: {i}]", callback_data=f"find:{i}"))
 
-    text += f"\nСсылка на результат: https://t.me/fmtestpython_bot?start=search_{query.id}"
+        text += f"\nСсылка на результат: https://t.me/fmtestpython_bot?start=search_{query.id}"
 
-    await message.reply(text, reply_markup=buttons)
+        await message.reply(text, reply_markup=buttons)
 
 @dp.callback_query_handler(lambda c: c.data.startswith('find:'))
 async def process_callback_button(callback_query: types.CallbackQuery):

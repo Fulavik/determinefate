@@ -5,7 +5,6 @@ from utils.func import *
 
 @dp.message_handler(Command('start', ignore_case=True))
 async def send_welcome(message: types.Message):    
-    user = await Users.filter(uid=message.from_id).first()
     args = message.get_args()
     if args.startswith("id_"):
         id = message.get_args().replace("id_", "")
@@ -65,6 +64,13 @@ ID: {id}
 @dp.callback_query_handler(lambda callback_query: callback_query.data.startswith("language"))
 async def choose_language(callback_query: CallbackQuery, state: FSMContext):
     lang = callback_query.data.split(":")[1]
+
+    user = await Users.filter(uid=callback_query.from_user.id).first()
+
+    if not user == None:
+        user.language = lang
+        await user.save()
+        return await callback_query.message.reply("Вы выбрали язык: " + LANGUAGES[lang])
 
     await Users.create(uid=callback_query.from_user.id, language = lang)
 

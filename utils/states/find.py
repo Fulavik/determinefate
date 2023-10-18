@@ -8,3 +8,4 @@ class Add(StatesGroup):
     middlename = State()
     year_of_birth = State()
     rank = State()
+    accepter = State()

@@ -11,6 +11,7 @@ class Queries(Model):
     middlename = fields.CharField(max_length=64)
     year_of_birth = fields.IntField()
     rank = fields.CharField(max_length=64)
+    accepter = fields.BooleanField(null=True)
 
     class Meta: 
         table = 'queries'
