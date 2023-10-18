@@ -138,9 +138,9 @@ async def rank(message: types.Message, state: FSMContext):
         for i in parse:
             number = number + 1
             text += f"{number}. {parse[i]['full_name']} [ID: {i}] | {parse[i]['date_of_birth']} | {parse[i]['date_of_die']}\n"
-            buttons.add(InlineKeyboardButton(text=f"{parse[i]['full_name']} [ID: {i}]", callback_data=f"find:{i}"))
+            buttons.add(InlineKeyboardButton(text=f"{number}. {parse[i]['full_name']} [ID: {i}]", callback_data=f"find:{i}"))
 
-        text += f"\nСсылка на результат: https://t.me/fmtestpython_bot?start=search_{query.id}"
+        text += f"\nСсылка на результат: https://t.me/determinefateBot?start=search_{query.id}"
 
         await message.reply(text, reply_markup=buttons)
 

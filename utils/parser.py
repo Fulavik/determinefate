@@ -2,15 +2,19 @@ import asyncio, requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 
 
 chrome_options = Options()
-chrome_options.add_argument("headless")
+# chrome_options.add_argument("headless")
 
 async def get_partizans(surname: str, name: str, middlename: str, year_of_birth: int, rank: str):
-    browser = webdriver.Chrome(chrome_options=chrome_options, executable_path="chromedriver.exe")
+    print(surname, name, middlename, year_of_birth, rank)
+    service = Service(executable_path="chromedriver.exe")
+    browser = webdriver.Chrome(options=chrome_options, service=service)
 
-    link = f"https://obd-memorial.ru/html/search.htm?f={name}&n={surname}&s={middlename}&y={year_of_birth}&r={rank}"
+    link = f"https://obd-memorial.ru/html/search.htm?f={surname}&n={name}&s={middlename}&y={year_of_birth}&r={rank}"
+    print(link)
 
     browser.get(link.replace("None", "").replace("0", ""))
 
